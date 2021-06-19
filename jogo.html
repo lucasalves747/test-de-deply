@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tente se puder</title>
+    <style>
+        body {
+            background-color:blue;
+            
+        }
+        button{
+            background-color: rgb(6, 238, 103);
+            color: orangered;
+            width: 300px;
+            height: 80px;
+            border: 2px green solid;
+        }
+        canvas{
+            position: absolute;
+            top: 0px;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+            margin: auto;
+        }
+        h1{
+            text-align: center;
+        }
+    </style>
+</head>
+<body><h1>
+
+    <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/> <button><h3>laçar</h3></button></h1>
+    <script>
+        //variaveis 
+        var canvas,ctx, ALTURA, LARGURA, frames = 0, maxPulos = 3, velocidade=6 ,estadoatual,N=121, btn =document.querySelector('button');
+
+        N=N-5
+        estados = {
+            jogar:0,
+            jogando:1,
+            perdeu:2
+
+        },
+        
+        chao = {
+            y: 550,
+            altura: 50,
+            cor: "#8b4513",
+
+            desenha: function() {
+                ctx.fillStyle= this.cor;
+                ctx.fillRect(0, this.y, LARGURA, this.altura);
+            }
+
+        },
+
+        grama = {
+            y: 550,
+            corgrama:"#006400",
+            alturagra:10,
+        
+            desenha: function() {
+                ctx.fillStyle= this.corgrama;
+                ctx.fillRect(0, this.y, LARGURA, this.alturagra);
+
+            }
+        },
+
+        sol = {
+            cor: "#ff4500",
+            cor2: "#ff8c00",
+            cor3:"#ffa500",
+
+            desenha: function() {
+                ctx.fillStyle= this.cor;
+                ctx.fillRect(LARGURA/2 - 50,ALTURA/6 - 50 ,90, 90)
+
+                ctx.fillStyle= this.cor2;
+                ctx.fillRect(LARGURA/2 - 40,ALTURA/6 - 40 ,60, 60)
+
+                ctx.fillStyle= this.cor3;
+                ctx.fillRect(LARGURA/2 - 30,ALTURA/6 - 30 ,30, 30)
+
+            }
+
+        },
+        
+        bloco = {
+            x: 50,
+            y: 0,
+            altura: 50,
+            largura: 50,
+            cor:"#8b0000",
+            gravidade: 1.6,
+            velocidade: 0,
+            forçadopulo:20,
+            qntpulos: 2,
+            score:0,
+            cor2:'#dcdcdc',
+            olholar:10,
+            olhoal:10,
+            cor3:'#ff6347',
+            bocaal:13,
+            cor4:'#000000',
+            olhola:5,
+            olhoa:5,
+
+            atualiza: function(){
+                this.velocidade+= this.gravidade;
+                this.y += this.velocidade;
+
+                if (this.y > chao.y - this.altura && estadoatual!=estados.perdeu){
+                    this.y = chao.y - this.altura;
+                    this.qntpulos=1;
+                    this.velocidade=0;
+                }
+
+            },
+
+            pula: function(){
+                if (this.qntpulos < maxPulos){
+                     this.velocidade =-this.forçadopulo;
+                     this.qntpulos++;
+                }
+
+            },
+
+            reset: function(){
+                this.velocidade=0;
+                this.y=0;
+                this.score=0;
+            },
+               
+            desenha: function() {
+                ctx.fillStyle = this.cor;
+                ctx.fillRect(this.x,this.y,this.largura,this.altura);
+
+                //olho
+                ctx.fillStyle = this.cor2;
+                ctx.fillRect(this.x + 7,this.y + 7,this.olholar,this.olhoal);
+
+                ctx.fillStyle = this.cor2;
+                ctx.fillRect(this.x + 30,this.y + 7,this.olholar,this.olhoal);
+
+                ctx.fillStyle = this.cor4;
+                ctx.fillRect(this.x + 11,this.y + 10,this.olhola,this.olhoa);
+
+                ctx.fillStyle = this.cor4;
+                ctx.fillRect(this.x + 34,this.y + 10,this.olhola,this.olhoa);
+
+                //dente
+                ctx.fillStyle = this.cor3;
+                ctx.fillRect(this.x + 20,this.y + 23,this.olholar,this.bocaal);
+
+            }
+        };
+
+        atirar={
+            x: 50,
+            y: 500,
+            altura: 5,
+            largura: 50,
+            cor:"#000000",
+            v:5,
+            largura2:10,
+            cor2:'#ff0000',
+            
+
+            ati: function(){
+                this.x+=5
+                if (this.x >= 200){
+                 this.x=50
+                 }
+             },
+                
+            
+
+            desenha:function(){
+                ctx.fillStyle=this.cor;
+                ctx.fillRect(this.x,this.y,this.largura,this.altura);
+                this.x+=5
+                ctx.fillStyle=this.cor2;
+                ctx.fillRect(this.x,this.y,this.largura2,this.altura);
+                ctx.fillStyle=this.cor3;
+                //ctx.fillRect(this.x + 40,this.y - 3,this.largura2,this.altura3);
+            }
+
+           
+               
+
+
+        },
+
+        obstaculos = {
+            _obs: [],
+            cores: ["#228b22","#006400","#008080","#32cd32"],
+            tempoInsere: 0,
+
+            insere: function(){
+                this._obs.push({
+                    x: LARGURA,
+                   // largura: 30 + Math.floor(10 * Math.random()),
+                    largura:50,
+                    altura: 30 + Math.floor(120* Math.random()),
+                    cor: this.cores[Math.floor(4 * Math.random())]
+                });
+
+                this.tempoInsere = 30 + Math.floor(N* Math.random());
+
+            },
+
+            atualiza: function(){
+                if (this.tempoInsere==0)
+                    this.insere();
+                else
+                    this.tempoInsere--;
+                for(var i = 0, tam = this._obs.length; i < tam; i++) {
+                    var obs = this._obs[i];
+
+                    obs.x-= velocidade;
+
+                    if (bloco.x<obs.x+ obs.largura && bloco.x+ bloco.largura>= obs.x && bloco.y+ bloco.altura>=chao.y-obs.altura)
+                        estadoatual = estados.perdeu;
+
+                    else if (obs.x==0)
+                         bloco.score++;
+
+                    else if (obs.x <= -obs.largura){
+                        this._obs.splice(i, 1);
+                        tam--;
+                        i--;
+
+                    }
+                }
+
+            },
+
+            limpa: function() {
+                this._obs=[];
+            },
+
+            desenha: function() {
+                for (var i=0, tam = this._obs.length; i < tam; i++){
+                    var obs = this._obs[i];
+                    ctx.fillStyle= obs.cor;
+                    ctx.fillRect(obs.x, chao.y - obs.altura, obs.largura, obs.altura);
+                }
+
+
+            }
+
+           
+        };
+
+        ator= {
+            x:2550,
+            y:500,
+            altura:50,
+            largura:50,
+            cores:'#00ffff',
+
+            movimento: function(){
+                if (this.x>10 || estadoatual==estados.jogando){
+                    this.x-=2;
+                }
+
+                else if (estadoatual==estados.jogando)
+                    this.x=1350;
+
+            },
+
+            encosta: function(){
+
+                if (this.x==atirar.x){
+                     this.x=1350;
+                    bloco.score+=20;
+                }
+                
+
+            },
+
+
+            desenha: function() {
+               // this.encosta();
+                this.movimento();
+                ctx.fillStyle=this.cores;
+                ctx.fillRect(this.x, this.y, this.largura, this.altura)
+            }
+        };
+
+
+        function clik(event) {
+             if (estadoatual == estados.jogando)
+                 bloco.pula();
+            else if (estadoatual==estados.jogar){
+                 estadoatual= estados.jogando;
+            }
+            else if (estadoatual==estados.perdeu){
+                estadoatual=estados.jogar;
+                obstaculos.limpa();
+               bloco.reset();
+            }
+        }
+
+       
+        btn.onclick = function(){
+            atirar.ati();
+            
+        }
+        
+
+
+        function main() {
+            ALTURA= window.innerHeight
+            LARGURA= window.innerWidth
+
+            if (LARGURA >= 500) {
+                LARGURA=600;
+                //450 ceular
+                ALTURA=600;
+            }
+            canvas = document.createElement('canvas')
+            canvas.width = LARGURA;
+            canvas.height = ALTURA;
+            canvas.style.border = "1px solid #000";
+
+            ctx = canvas.getContext("2d")
+            document.body.appendChild(canvas);
+            document.addEventListener("mousedown",clik);
+            
+
+            estadoatual = estados.jogar
+
+            roda();
+        }
+
+        function roda() {
+            atualiza();
+            desenha();
+
+            window.requestAnimationFrame(roda);
+        }
+
+        function atualiza() {
+            frames++;
+            bloco.atualiza();
+            if (estadoatual==estados.jogando){
+                obstaculos.atualiza();
+            }
+           
+        }
+
+        function desenha() {
+            ctx.fillStyle = "blue";
+            ctx.fillRect(0, 0, LARGURA, ALTURA);
+
+            ctx.fillStyle='#fff';
+            ctx.font ='50px Arial';
+            ctx.fillText(bloco.score,30 ,68)
+
+
+            if (estadoatual==estados.jogar){
+                ctx.fillStyle= "green"
+                ctx.fillRect(LARGURA/2 - 45,ALTURA/2 - 50 ,110, 100)
+
+                ctx.save();
+                ctx.translate(LARGURA/2,ALTURA/2);
+                ctx.fillStyle="#fff";
+               
+                ctx.fillText('jogar',-45,19);
+
+                ctx.restore();
+
+            }
+
+            else if (estadoatual == estados.perdeu){
+                ctx.fillStyle= "red"
+                ctx.fillRect(LARGURA/2 - 50,ALTURA/2 - 50 ,100, 100)
+
+                ctx.save();
+                ctx.translate(LARGURA/2,ALTURA/2);
+                ctx.fillStyle="#fff";
+                if (bloco.score<10)
+                    ctx.fillText(bloco.score,-13,19);
+                
+                else if (bloco.score>=10 && bloco.score < 100 )
+                    ctx.fillText(bloco.score, -26, 19);
+                
+                else 
+                    ctx.fillText(bloco.score, -39 , 19);
+                
+
+                ctx.restore();
+            }
+
+            else if (estadoatual==estados.jogando)
+                    obstaculos.desenha();
+
+            chao.desenha();
+            ator.desenha();
+            bloco.desenha();
+            grama.desenha();
+            sol.desenha();
+            atirar.desenha();
+            //<button><h3>laçar</h3></button>
+        }
+
+        // inicializa o jogo
+        main();
+    </script>
+     
+</body>
+</html>
